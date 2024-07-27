@@ -1,23 +1,24 @@
-import logo from './logo.svg';
 import './App.css';
+import Graph from './components/CustomGraph';
+
+async function fetchData() {
+  const response = await fetch('http://127.0.0.1:5000/data');
+  const data = await response.json();
+  console.log("Fetched data:", data);
+  return data;
+}
+
+var data = await fetchData()
+
+console.log("Hello!")
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <h3>My Graph</h3>
+      <div className="graph">
+        <Graph data={data}/>
+      </div>
     </div>
   );
 }
