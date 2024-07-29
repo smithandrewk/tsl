@@ -13,9 +13,16 @@ export default function LinePlot({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [drawing, setDrawing] = useState(false);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [isRPressed, setIsRPressed] = useState(false);
   const [startPoint, setStartPoint] = useState(null);
   const [lines, setLines] = useState([]);
+  const getXScale = (width) => d3.scaleLinear()
+    .domain([0, data.length - 1])
+    .range([marginLeft, width - marginRight]);
 
+  const getYScale = (height) => d3.scaleLinear()
+    .domain([-15, 15])
+    .range([height - marginBottom, marginTop]);
   // resize effect
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -29,7 +36,7 @@ export default function LinePlot({
 
     return () => resizeObserver.unobserve(svgRef.current.parentElement);
   }, []);
-
+  // initial draw
   useEffect(() => {
     const { width, height } = dimensions;
     console.log(`Drawing graph with dimensions: ${width} ${height}`);
@@ -42,13 +49,8 @@ export default function LinePlot({
 
     svg.selectAll('*').remove(); // Clear existing content
 
-    const xScale = d3.scaleLinear()
-      .domain([0, data.length - 1])
-      .range([marginLeft, width - marginRight]);
-
-    const yScale = d3.scaleLinear()
-      .domain([-15, 15])
-      .range([height - marginBottom, marginTop]);
+    const xScale = getXScale(width);
+    const yScale = getYScale(height);
 
     const lineGenerator = d3.line()
       .x(d => xScale(d[0]))
@@ -73,21 +75,16 @@ export default function LinePlot({
 
     pathRef.current = path;
   }, [data, dimensions]);
-
+  // zoom
   useEffect(() => {
     const { width, height } = dimensions;
     console.log(`Drawing graph with dimensions: ${width} ${height}`);
     if (width === 0 || height === 0) return;
 
     const svg = d3.select(svgRef.current);
+    const xScale = getXScale(width);
+    const yScale = getYScale(height);
 
-    const xScale = d3.scaleLinear()
-      .domain([0, data.length - 1])
-      .range([marginLeft, width - marginRight]);
-
-    const yScale = d3.scaleLinear()
-      .domain([-15, 15])
-      .range([height - marginBottom, marginTop]);
 
     const zoom = d3.zoom()
       .scaleExtent([1, 10])
@@ -115,9 +112,11 @@ export default function LinePlot({
     svg.call(zoom);
 
     const handleKeyUp = (event) => {
+      svg.call(zoom);
       if (event.key === 'Shift') {
-        svg.call(zoom);
         setIsShiftPressed(false);
+      } else if (event.key === 'r') {
+        setIsRPressed(false);
       }
     };
 
@@ -138,16 +137,12 @@ export default function LinePlot({
       if (event.key === 'Shift') {
         svg.on('.zoom', null); // Disable zoom
         setIsShiftPressed(true);
+      } else if (event.key === "r") {
+        setIsRPressed(true);
       }
     };
-
-    const xScale = d3.scaleLinear()
-      .domain([0, data.length - 1])
-      .range([marginLeft, width - marginRight]);
-
-    const yScale = d3.scaleLinear()
-      .domain([-15, 15])
-      .range([height - marginBottom, marginTop]);
+    const xScale = getXScale(width);
+    const yScale = getYScale(height);
 
     const handleMouseDown = (event) => {
       if (isShiftPressed) {
@@ -205,7 +200,7 @@ export default function LinePlot({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [drawing, isShiftPressed, startPoint, dimensions]);
+  }, [drawing, isShiftPressed, startPoint, dimensions,isRPressed]);
 
   return <svg ref={svgRef}></svg>;
 }
