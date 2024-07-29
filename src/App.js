@@ -1,5 +1,5 @@
 import './App.css';
-import Graph from './components/CustomGraph';
+import LinePlot from './components/CustomGraph';
 
 async function fetchData() {
   const response = await fetch('http://127.0.0.1:5000/data');
@@ -17,7 +17,7 @@ function App() {
     <div className="app">
       <h3>My Graph</h3>
       <div className="graph">
-        <Graph data={data}/>
+        <LinePlot data={data}/>
       </div>
     </div>
   );
