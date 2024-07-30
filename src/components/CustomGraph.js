@@ -107,7 +107,7 @@ export default function LinePlot({
       svg.append('rect')
       .attr('class', 'left-rect-edge')
       .datum(rect)
-      .attr('x', xScale(rect.start[0]- 5))
+      .attr('x', xScale(rect.start[0]- 1))
       .attr('y', 0)
       .attr('width', 10)
       .attr('height', height - marginBottom)
@@ -118,7 +118,7 @@ export default function LinePlot({
       svg.append('rect')
       .attr('class', 'right-rect-edge')
       .datum(rect)
-      .attr('x', xScale(rect.end[0]- 5))
+      .attr('x', xScale(rect.end[0]- 1))
       .attr('y', 0)
       .attr('width', 10)
       .attr('height', height - marginBottom)
@@ -164,11 +164,11 @@ export default function LinePlot({
             .attr('width', d => Math.abs(newXScale(d.end[0]) - newXScale(d.start[0])));
 
           svg.selectAll('.left-rect-edge')
-            .attr('x', d => newXScale(d.start[0]-5))
+            .attr('x', d => newXScale(d.start[0]-1))
             .attr('width', d => 10);
 
           svg.selectAll('.right-rect-edge')
-            .attr('x', d => newXScale(d.end[0]-5))
+            .attr('x', d => newXScale(d.end[0]-1))
             .attr('width', d => 10);
         }
       });
@@ -287,7 +287,7 @@ export default function LinePlot({
         svg.append('rect')
         .attr('class', 'left-rect-edge')
         .datum(newRect)
-        .attr('x', xScale(newRect.start[0]- 5))
+        .attr('x', xScale(newRect.start[0]- 1))
         .attr('y', 0)
         .attr('width', 10)
         .attr('height', height - marginBottom)
@@ -298,7 +298,7 @@ export default function LinePlot({
         svg.append('rect')
         .attr('class', 'right-rect-edge')
         .datum(newRect)
-        .attr('x', xScale(newRect.end[0]- 5))
+        .attr('x', xScale(newRect.end[0]- 1))
         .attr('y', 0)
         .attr('width', 10)
         .attr('height', height - marginBottom)
