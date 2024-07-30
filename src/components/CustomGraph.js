@@ -27,6 +27,55 @@ export default function LinePlot({
     .domain([-15, 15])
     .range([height - marginBottom, marginTop]);
 
+  // Function to add handles for dragging edges
+  const addEdgeHandles = (svg, rect) => {
+    const xScale = getXScale(dimensions.width);
+    const yScale = getYScale(dimensions.height);
+
+    const dragLeft = d3.drag()
+      .on('drag', function (event, d) {
+        const newX = Math.min(xScale.invert(event.x), rect.end[0]);
+        rect.start[0] = newX;
+        d3.select(this).attr('x', xScale(newX) - 5);
+        svg.selectAll('.drawn-rect')
+          .filter(r => r === rect)
+          .attr('x', xScale(rect.start[0]))
+          .attr('width', xScale(rect.end[0]) - xScale(rect.start[0]));
+      });
+
+    const dragRight = d3.drag()
+      .on('drag', function (event, d) {
+        const newX = Math.max(xScale.invert(event.x), rect.start[0]);
+        rect.end[0] = newX;
+        d3.select(this).attr('x', xScale(newX) - 5);
+        svg.selectAll('.drawn-rect')
+          .filter(r => r === rect)
+          .attr('width', xScale(rect.end[0]) - xScale(rect.start[0]));
+      });
+
+    svg.append('rect')
+      .attr('class', 'left-rect-edge')
+      .datum(rect)
+      .attr('x', xScale(rect.start[0]) - 5)
+      .attr('y', 0)
+      .attr('width', 10)
+      .attr('height', dimensions.height - marginBottom)
+      .attr('fill', 'rgba(0, 0, 0, 0.5)')
+      .style('cursor', 'ew-resize')
+      .call(dragLeft);
+
+    svg.append('rect')
+      .attr('class', 'right-rect-edge')
+      .datum(rect)
+      .attr('x', xScale(rect.end[0]) - 5)
+      .attr('y', 0)
+      .attr('width', 10)
+      .attr('height', dimensions.height - marginBottom)
+      .attr('fill', 'rgba(0, 0, 0, 0.5)')
+      .style('cursor', 'ew-resize')
+      .call(dragRight);
+  };
+
   // resize effect
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -79,6 +128,7 @@ export default function LinePlot({
       .attr('d', lineGenerator);
 
     pathRef.current = path;
+
     // Redraw lines
     lines.forEach(line => {
       svg.append('line')
@@ -104,28 +154,9 @@ export default function LinePlot({
         .attr('fill', 'rgba(255, 0, 0, 0.1)');
 
       // Add handles for dragging edges
-      svg.append('rect')
-      .attr('class', 'left-rect-edge')
-      .datum(rect)
-      .attr('x', xScale(rect.start[0]- 1))
-      .attr('y', 0)
-      .attr('width', 10)
-      .attr('height', height - marginBottom)
-      .attr('fill', 'rgba(0, 0, 0, 0.5)')
-      .style('cursor', 'ew-resize')
+      addEdgeHandles(svg, rect);
+    });
 
-      // Add handles for dragging edges
-      svg.append('rect')
-      .attr('class', 'right-rect-edge')
-      .datum(rect)
-      .attr('x', xScale(rect.end[0]- 1))
-      .attr('y', 0)
-      .attr('width', 10)
-      .attr('height', height - marginBottom)
-      .attr('fill', 'rgba(0, 0, 0, 0.5)')
-      .style('cursor', 'ew-resize')
-      });
-    
   }, [data, dimensions]);
 
   // zoom
@@ -164,12 +195,10 @@ export default function LinePlot({
             .attr('width', d => Math.abs(newXScale(d.end[0]) - newXScale(d.start[0])));
 
           svg.selectAll('.left-rect-edge')
-            .attr('x', d => newXScale(d.start[0]-1))
-            .attr('width', d => 10);
+            .attr('x', d => newXScale(d.start[0]) - 5);
 
           svg.selectAll('.right-rect-edge')
-            .attr('x', d => newXScale(d.end[0]-1))
-            .attr('width', d => 10);
+            .attr('x', d => newXScale(d.end[0]) - 5);
         }
       });
 
@@ -284,26 +313,7 @@ export default function LinePlot({
           .attr('fill', 'rgba(255, 0, 0, 0.1)');
 
         // Add handles for dragging edges
-        svg.append('rect')
-        .attr('class', 'left-rect-edge')
-        .datum(newRect)
-        .attr('x', xScale(newRect.start[0]- 1))
-        .attr('y', 0)
-        .attr('width', 10)
-        .attr('height', height - marginBottom)
-        .attr('fill', 'rgba(0, 0, 0, 0.5)')
-        .style('cursor', 'ew-resize')
-
-        // Add handles for dragging edges
-        svg.append('rect')
-        .attr('class', 'right-rect-edge')
-        .datum(newRect)
-        .attr('x', xScale(newRect.end[0]- 1))
-        .attr('y', 0)
-        .attr('width', 10)
-        .attr('height', height - marginBottom)
-        .attr('fill', 'rgba(0, 0, 0, 0.5)')
-        .style('cursor', 'ew-resize')
+        addEdgeHandles(svg, newRect);
       }
     };
 
