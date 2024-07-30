@@ -26,6 +26,7 @@ export default function LinePlot({
   const getYScale = (height) => d3.scaleLinear()
     .domain([-15, 15])
     .range([height - marginBottom, marginTop]);
+
   // resize effect
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -39,6 +40,7 @@ export default function LinePlot({
 
     return () => resizeObserver.unobserve(svgRef.current.parentElement);
   }, []);
+
   // initial draw
   useEffect(() => {
     const { width, height } = dimensions;
@@ -77,7 +79,55 @@ export default function LinePlot({
       .attr('d', lineGenerator);
 
     pathRef.current = path;
+    // Redraw lines
+    lines.forEach(line => {
+      svg.append('line')
+        .attr('class', 'drawn-line')
+        .datum(line)
+        .attr('x1', xScale(line.start[0]))
+        .attr('x2', xScale(line.end[0]))
+        .attr('y1', yScale(line.start[1]))
+        .attr('y2', yScale(line.end[1]))
+        .attr('stroke', 'black')
+        .attr('stroke-width', 1.5);
+    });
+
+    // Redraw rectangles
+    rects.forEach(rect => {
+      svg.append('rect')
+        .attr('class', 'drawn-rect')
+        .datum(rect)
+        .attr('x', xScale(rect.start[0]))
+        .attr('y', 0)
+        .attr('width', Math.abs(xScale(rect.end[0]) - xScale(rect.start[0])))
+        .attr('height', height - marginBottom)
+        .attr('fill', 'rgba(255, 0, 0, 0.1)');
+
+      // Add handles for dragging edges
+      svg.append('rect')
+      .attr('class', 'left-rect-edge')
+      .datum(rect)
+      .attr('x', xScale(rect.start[0]- 5))
+      .attr('y', 0)
+      .attr('width', 10)
+      .attr('height', height - marginBottom)
+      .attr('fill', 'rgba(0, 0, 0, 0.5)')
+      .style('cursor', 'ew-resize')
+
+      // Add handles for dragging edges
+      svg.append('rect')
+      .attr('class', 'right-rect-edge')
+      .datum(rect)
+      .attr('x', xScale(rect.end[0]- 5))
+      .attr('y', 0)
+      .attr('width', 10)
+      .attr('height', height - marginBottom)
+      .attr('fill', 'rgba(0, 0, 0, 0.5)')
+      .style('cursor', 'ew-resize')
+      });
+    
   }, [data, dimensions]);
+
   // zoom
   useEffect(() => {
     const { width, height } = dimensions;
@@ -96,6 +146,7 @@ export default function LinePlot({
         if (event.sourceEvent && !event.sourceEvent.shiftKey && !isRPressed) {
           const newXScale = event.transform.rescaleX(xScale);
           const newYScale = event.transform.rescaleY(yScale);
+
           pathRef.current.attr('d', d3.line()
             .x(d => newXScale(d[0]))
             .y(d => newYScale(d[1]))(data.map((d, i) => [i, d])));
@@ -103,15 +154,22 @@ export default function LinePlot({
           svg.select('.x-axis').call(d3.axisBottom(newXScale));
           svg.select('.y-axis').call(d3.axisLeft(newYScale));
 
-          svg.selectAll('.drawn-line')
-            .attr('x1', d => newXScale(d.start[0]))
+          svg.selectAll('.drawn-line').attr('x1', d => newXScale(d.start[0]))
             .attr('x2', d => newXScale(d.end[0]))
             .attr('y1', d => newYScale(d.start[1]))
             .attr('y2', d => newYScale(d.end[1]));
-            
-            svg.selectAll('.drawn-rect')
+
+          svg.selectAll('.drawn-rect')
             .attr('x', d => newXScale(d.start[0]))
             .attr('width', d => Math.abs(newXScale(d.end[0]) - newXScale(d.start[0])));
+
+          svg.selectAll('.left-rect-edge')
+            .attr('x', d => newXScale(d.start[0]-5))
+            .attr('width', d => 10);
+
+          svg.selectAll('.right-rect-edge')
+            .attr('x', d => newXScale(d.end[0]-5))
+            .attr('width', d => 10);
         }
       });
 
@@ -162,7 +220,7 @@ export default function LinePlot({
       const [x, y] = d3.pointer(event);
       if (drawing) {
         svg.selectAll('line.temp-line').remove();
-  
+
         svg.append('line')
           .attr('x1', xScale(startPoint[0]))
           .attr('x2', x)
@@ -176,16 +234,13 @@ export default function LinePlot({
         svg.selectAll('rect.temp-rect').remove();
 
         svg.append('rect')
-        .attr('x',xScale(startPoint[0]))
-        .attr('y',marginTop)
-        .attr('width', Math.abs(x-xScale(startPoint[0])))
-        .attr('height', height - marginTop - marginBottom)
-        .attr('fill', 'rgba(255, 0, 0, 0.1)')
-        .attr('class', 'temp-rect');
-
+          .attr('x', xScale(startPoint[0]))
+          .attr('y', 0)
+          .attr('width', Math.abs(x - xScale(startPoint[0])))
+          .attr('height', height - marginBottom)
+          .attr('fill', 'rgba(255, 0, 0, 0.1)')
+          .attr('class', 'temp-rect');
       }
-
-
     };
     const handleMouseUp = (event) => {
       const [x, y] = d3.pointer(event);
@@ -218,18 +273,39 @@ export default function LinePlot({
         setRects(rects => [...rects, newRect]);
 
         setDrawingRect(false);
+
         svg.append('rect')
-        .attr('class', 'rect.drawn-rect')
+          .attr('class', 'drawn-rect')
+          .datum(newRect)
+          .attr('x', xScale(newRect.start[0]))
+          .attr('y', 0)
+          .attr('width', Math.abs(xScale(newRect.end[0]) - xScale(newRect.start[0])))
+          .attr('height', height - marginBottom)
+          .attr('fill', 'rgba(255, 0, 0, 0.1)');
+
+        // Add handles for dragging edges
+        svg.append('rect')
+        .attr('class', 'left-rect-edge')
         .datum(newRect)
-        .attr('x',xScale(newRect.start[0]))
-        .attr('y',marginTop)
-        .attr('width', Math.abs(xScale(newRect.end[0])-xScale(newRect.start[0])))
-        .attr('height', height - marginTop - marginBottom)
-        .attr('fill', 'rgba(255, 0, 0, 0.1)')
+        .attr('x', xScale(newRect.start[0]- 5))
+        .attr('y', 0)
+        .attr('width', 10)
+        .attr('height', height - marginBottom)
+        .attr('fill', 'rgba(0, 0, 0, 0.5)')
+        .style('cursor', 'ew-resize')
+
+        // Add handles for dragging edges
+        svg.append('rect')
+        .attr('class', 'right-rect-edge')
+        .datum(newRect)
+        .attr('x', xScale(newRect.end[0]- 5))
+        .attr('y', 0)
+        .attr('width', 10)
+        .attr('height', height - marginBottom)
+        .attr('fill', 'rgba(0, 0, 0, 0.5)')
+        .style('cursor', 'ew-resize')
       }
     };
-
-
 
     svg.on('mousemove', handleMouseMove);
     svg.on('mousemove.zoom', handleMouseMove);
